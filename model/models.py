@@ -20,7 +20,7 @@ class ResNet50(nn.Module):
         )
         
         self.resnet.avgpool = AvgPool()
-        self.resent.fc = nn.Linear(2048, num_outputs)
+        self.resnet.fc = nn.Linear(2048, num_outputs)
 
         for param in self.resnet.parameters():
             param.requires_grad = False

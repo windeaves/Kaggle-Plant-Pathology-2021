@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
     train_args.criterion = MultiLabelCrossEntropyLoss()
 
-    trainer = Trainer(model, train_dataset, train_args, ckpt = ckpt)
+    trainer = Trainer(model, train_dataloader, train_args, ckpt = ckpt)
 
     trainer.train()
     
