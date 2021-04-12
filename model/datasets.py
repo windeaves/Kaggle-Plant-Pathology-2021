@@ -7,7 +7,8 @@ from PIL import Image
 
 class_list = ["scab", 
              "frog_eye_leaf_spot", 
-             "rust", 
+             "rust",
+             "powdery_mildew",
              "complex"]
 
 class BasicDataset(Dataset):
