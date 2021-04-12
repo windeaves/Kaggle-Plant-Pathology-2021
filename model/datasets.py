@@ -26,6 +26,7 @@ class BasicDataset(Dataset):
         img_name = self.img_names[idx]
         sample = dict(image = self.readin(os.path.join(self.img_path, img_name)),
                       label = self.labels[img_name])
+        return sample
 
     def readin(self, path):
         img = Image.open(path)
