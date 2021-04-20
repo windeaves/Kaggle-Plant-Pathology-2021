@@ -9,6 +9,8 @@ from torch.autograd import Variable
 
 from model import *
 
+cuda = True
+
 class TrainParams(object):
     
     def __init__(self, max_epoch, save_dir, learning_rate = 1e-3, lr_step = 3, lr_factor = 0.5):
@@ -33,7 +35,8 @@ class Trainer(object):
         self.lr_scheduler = self.params.lr_scheduler
 
         self.model = model
-        self.model.cuda()
+        if cuda:
+            self.model.cuda()
 
         if not os.path.exists(self.params.save_dir):
             os.makedirs(self.params.save_dir) 
@@ -82,8 +85,11 @@ class Trainer(object):
     def _train_one_epoch(self, epoch):
         enum = tqdm(enumerate(self.data), total = len(self.data))
         for _, data in enum:
-            inputs = Variable(data["image"]).cuda()
-            target = Variable(data["label"]).cuda()
+            inputs = Variable(data["image"])
+            target = Variable(data["label"])
+            if cuda:
+                inputs = inputs.cuda()
+                target = target.cuda()
 
             # forward
             score = self.model(inputs)
@@ -120,9 +126,10 @@ if __name__ == "__main__":
     train_label = "../train.csv"
 
     model = ResNet50(num_outputs = len(class_list))
-    model.cuda()
+    if cuda:
+        model.cuda()
 
-    train_dataset = BasicDataset(train_images_root, train_label, Transformation())
+    train_dataset = BasicDataset(train_images_root, train_label, Transformation(), True)
     train_dataloader = torch.utils.data.DataLoader(train_dataset, 
                                                     shuffle=False, 
                                                     batch_size = opt.batch_size, 
@@ -142,7 +149,7 @@ if __name__ == "__main__":
     lr_scheduler = torch.optim.lr_scheduler.StepLR(train_args.optimizer, step_size=train_args.lr_step)
     train_args.lr_scheduler = lr_scheduler
 
-    train_args.criterion = MultiLabelCrossEntropyLoss()
+    train_args.criterion = MultiClassCrossEntropyLoss()
 
     trainer = Trainer(model, train_dataloader, train_args, ckpt = ckpt)
 
