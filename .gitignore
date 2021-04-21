@@ -112,3 +112,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Training
+dataset/
+log/
+*.pt
+wandb/
+
+.idea

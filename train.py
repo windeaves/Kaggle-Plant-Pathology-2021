@@ -3,6 +3,7 @@ import torch
 import numpy as np
 import argparse
 from tqdm import tqdm
+import wandb
 
 from torchnet import meter
 from torch.autograd import Variable
@@ -77,7 +78,7 @@ class Trainer(object):
                 'model_state_dict': self.model.state_dict(),
                 'optimizer_state_dict': self.optimizer.state_dict(),
                 'loss': self.loss_meter.mean
-            }, os.path.join(self.params.save_dir, "epoch_{epoch}.pt".format(epoch)))
+            }, os.path.join(self.params.save_dir, "epoch_{}.pt".format(epoch)))
 
     def _train_one_epoch(self, epoch):
         enum = tqdm(enumerate(self.data), total = len(self.data))
@@ -100,15 +101,17 @@ class Trainer(object):
             s = ('%10s' * 2 + ' loss: %10.6g   batch: %10.4g  img_size: %10.4g') % (
                     '%g/%g' % (epoch, self.params.max_epoch - 1), mem, loss.data, target.shape[0], inputs.shape[-1])
             enum.set_description(s)
+
+        wandb.log({"train_loss": loss.data})
         enum.close()
 
 
 def set_parser():
     parser = argparse.ArgumentParser(description="train.py")
-    parser.add_argument('--epochs', type=int, default=20)
-    parser.add_argument('--batch-size', type=int, default=32, help='total batch size')
+    parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--batch-size', type=int, default=64, help='total batch size')
     parser.add_argument('--workers', type=int, default=8, help='maximum number of dataloader workers')
-    parser.add_argument('--resume-from', type=str, default="pretrained", help='checkpoint file path')
+    parser.add_argument('--resume-from', type=str, default="runs/project/epoch_70.pt", help='checkpoint file path')
     parser.add_argument('--save-dir', type=str, default="./runs/project", help="save dir")
     return parser
     
@@ -116,8 +119,16 @@ if __name__ == "__main__":
     parser = set_parser()
     opt = parser.parse_args()
 
-    train_images_root = "../train_images"
-    train_label = "../train.csv"
+    train_images_root = "dataset/train_images"
+    train_label = "dataset/train.csv"
+    train_args = TrainParams(max_epoch=opt.epochs, save_dir=opt.save_dir)
+
+    wandb.init(project="Plant_Pathology", config={
+        "epoch": opt.epochs,
+        "batch_size": opt.batch_size,
+        "init_lr": train_args.learning_rate,
+        "step_size": train_args.lr_step
+    })
 
     model = ResNet50(num_outputs = len(class_list))
     model.cuda()
@@ -133,8 +144,6 @@ if __name__ == "__main__":
         ckpt = opt.resume_from
 
     logger.info("Init train_args")
-
-    train_args = TrainParams(max_epoch=opt.epochs, save_dir=opt.save_dir)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=train_args.learning_rate)
     train_args.optimizer = optimizer
