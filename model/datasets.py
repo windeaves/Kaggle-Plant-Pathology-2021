@@ -13,7 +13,8 @@ class_list = ["scab",
 
 class BasicDataset(Dataset):
     
-    def __init__(self, img_path, label_path, transform = None):
+    def __init__(self, img_path, label_path, transform = None, is_multi_class = False):
+        self.is_multi_class = is_multi_class
         self.img_path = img_path
         self.img_names = os.listdir(img_path)
         self.label_file = pd.read_csv(label_path, header = 0)
@@ -44,3 +45,12 @@ class BasicDataset(Dataset):
         for row in self.label_file.itertuples(index=False):
             self.labels[getattr(row, "image")] = to_tensor(getattr(row, "labels"))
         
+        if self.is_multi_class:
+            self.multi_class()
+
+    def multi_class(self):
+        self.label_cls = dict()
+        for i, x in enumerate(set(self.labels.values())):
+            self.label_cls[x] = i
+        for m in self.labels.keys():
+            self.labels[m] = self.label_cls[self.label_cls[m]]

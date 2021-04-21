@@ -34,6 +34,15 @@ class ResNet50(nn.Module):
     def forward(self, x):
         return self.resnet(x)
 
+class MultiClassCrossEntropyLoss(nn.Module):
+
+    def __init__(self):
+        super(MultiClassCrossEntropyLoss, self).__init__()
+        self.CrossEntropyLoss = nn.CrossEntropyLoss()
+
+    def forward(self, output, target):
+        return self.CrossEntropyLoss.forward(output, target)
+
 class MultiLabelCrossEntropyLoss(nn.Module):
 
     def __init__(self):
